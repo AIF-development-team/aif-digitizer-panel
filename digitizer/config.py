@@ -2,10 +2,34 @@
 """
 Configuration, including options fetched from ISDB API.
 """
+import json
 import os
 import requests
 import requests_cache
 from . import MODULE_DIR
+
+AIF_REQUIRED = {} #loads AIF keynames with required tag from JSON file into dictionary
+AIF_OPTIONAL = {}
+AIF_LOOPS = []
+with open('aifdictionary.json', 'r', encoding='utf-8') as json_dict:
+    json_dict = json.load(json_dict)
+for item in json_dict:
+    if item['required'] == 'True':
+        AIF_REQUIRED[item['data name']] = item['description']
+        
+substring1 = '_adsorp_'
+substring2 = '_desorp_'
+
+for item in json_dict:
+    if substring1 in item['data name']:
+        AIF_LOOPS += [item['data name']] 
+        #print('success')
+    elif substring2 in item['data name']:
+        AIF_LOOPS += [item['data name']]
+        #print('success2')
+    elif item['required'] == 'False':
+        AIF_OPTIONAL[item['data name']] = item['description']
+# print(AIF_LOOPS)
 
 requests_cache.install_cache('matdb_cache')
 

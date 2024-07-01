@@ -4,7 +4,7 @@
 import os
 import panel as pn
 from .check import IsothermCheckView
-from .forms import IsothermSingleComponentForm, IsothermMultiComponentForm
+from .forms import IsothermSingleComponentForm#, IsothermMultiComponentForm
 from .config import TEMPLATES_DIR
 
 # load CSS
@@ -15,9 +15,11 @@ pn.extension(raw_css=[css])
 # prepare tabs
 tabs = pn.Tabs(css_classes=['main-tab'])
 single = IsothermSingleComponentForm(tabs=tabs)
-multi = IsothermMultiComponentForm(tabs=tabs)
-check = IsothermCheckView(observed_forms=[single, multi])
-tabs.extend([('Single-component', single.layout), ('Multi-component', multi.layout), ('Check', check.layout)])
+#multi = IsothermMultiComponentForm(tabs=tabs)
+#check = IsothermCheckView(observed_forms=[single, multi])
+check = IsothermCheckView(observed_forms=[single])
+#tabs.extend([('Single-component', single.layout), ('Multi-component', multi.layout), ('Check', check.layout)])
+tabs.extend([('Single-component', single.layout), ('Check', check.layout)])
 
 # create layout
 template = pn.template.BootstrapTemplate(title='Isotherm Digitizer')

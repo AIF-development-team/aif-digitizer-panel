@@ -23,7 +23,6 @@ class Isotherm(HasTraits):
         self.parent = None
         self.json = json
         self.figure_image = figure_image
-        self.name = name or '{} ({})'.format(json['articleSource'], json['DOI'])
 
         self.btn_remove = pw.Button(name='❌', button_type='primary')
         self.btn_remove.on_click(self.on_click_remove)
@@ -32,7 +31,6 @@ class Isotherm(HasTraits):
         self.btn_load.on_click(self.on_click_load)
 
         row = pn.GridSpec(height=ROW_HEIGHT)
-        row[0, 0:17] = pn.pane.HTML(self.name)
         row[0, 18] = pn.pane.PNG(object=get_identicon(str(hash(self))))
         row[0, 19] = self.btn_load
         row[0, 20] = self.btn_remove

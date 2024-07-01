@@ -6,7 +6,8 @@ import datetime
 import pandas as pd
 import panel as pn
 
-from .config import find_by_name, QUANTITIES
+from .config import find_by_name, QUANTITIES, AIF_REQUIRED
+#from .forms import required_inputs
 from . import ValidationError
 
 
@@ -30,46 +31,31 @@ def prepare_isotherm_dict(form):
     if not valid:
         raise ValidationError(msg)
 
+    # for inp in form.inp_keynames.column:
+    #     if not inp[:][1].value or inp.value[:][1] == 'value here':
+    #         msg += 'Please fill in all keyname/keyvalue pairs or remove the empty row\n'
+    #         valid = False
+    #     if not valid:
+    #         raise ValidationError(msg)
+
     # fill data
-    data['DOI'] = form.inp_doi.value
-
-    try:
-        adsorbent_json = find_by_name(form.inp_adsorbent.value, QUANTITIES['adsorbents']['json'])
-    except ValueError:
-        adsorbent_json = dict(name=form.inp_adsorbent.value, hashkey=None)
-
-    data['adsorbent'] = {key: adsorbent_json[key] for key in ['name', 'hashkey']}
-    try:
-        data['temperature'] = int(form.inp_temperature.value)
-    except ValueError as error_handler:
-        raise ValidationError('Could not convert temperature to int.') from error_handler
-
+    #for 
+    
+    
     adsorbates_json = [find_by_name(a.inp_name.value, QUANTITIES['adsorbates']['json']) for a in form.inp_adsorbates]
     data['adsorbates'] = [{key: adsorbate[key] for key in ['name', 'InChIKey']} for adsorbate in adsorbates_json]
-    data['isotherm_type'] = form.inp_isotherm_type.value
-    data['category'] = form.inp_measurement_type.value
     form_type = 'single-component' if form.__class__.__name__ == 'IsothermSingleComponentForm' else 'multi-component'
     data['isotherm_data'] = parse_isotherm_data(form.inp_isotherm_data.value, data['adsorbates'], form_type=form_type)
 
-    data['pressureUnits'] = form.inp_pressure_units.value
-    if form.inp_saturation_pressure.value:
-        try:
-            data['saturationPressure'] = float(form.inp_saturation_pressure.value)
-        except ValueError as error_handler:
-            raise ValidationError('Could not convert saturationPressure to float.') from error_handler
-    data['adsorptionUnits'] = form.inp_adsorption_units.value
     if form.__class__.__name__ == 'IsothermMultiComponentForm':
         data['compositionType'] = form.inp_composition_type.value
         data['concentrationUnits'] = form.inp_concentration_units.value
     else:
         data['compositionType'] = 'molefraction'  # default for single-component isotherm
         data['concentrationUnits'] = None
-    data['articleSource'] = form.inp_source_type.value
     data['custom'] = form.inp_comment.value
-    if form.inp_tabular.value:
-        data['tabular_data'] = True
-    data['digitizer'] = form.inp_digitizer.value
     data['associated_content'] = [form.inp_figure_image.filename]
+
     # 'associated_content' is a list in anticipation of multiple file selection
     # code for getting filenames will change
 
@@ -77,12 +63,114 @@ def prepare_isotherm_dict(form):
     data['date'] = datetime.date.today().strftime('%Y-%m-%d')
     # strftime is not strictly necessary but ensures correct YYYY-MM-DD format
 
+    # Remakes required inputs lists then appends to data dict using the new list indexes
+    required_inputs = []
+    required_inputs2 = []
+    required_inputs3 = []
+    x = 0
+    for item in AIF_REQUIRED:
+        if x == 0:
+            x = x+1
+            required_inputs.append(item)
+            
+        elif x == 1:
+            x = x+1
+            required_inputs2.append(item)
+            
+        elif x == 2:
+            x = 0
+            required_inputs3.append(item)
+    
+    for item in required_inputs:
+        index = required_inputs.index(item)
+        data[item] = form.req_column[index].value
+
+    for item in required_inputs2:
+        index = required_inputs2.index(item)
+        data[item] = form.req_column2[index].value
+
+    for item in required_inputs3:
+        index = required_inputs3.index(item)
+        data[item] = form.req_column3[index].value
+        
+    #AIF Optional fields
+    numb = len(list(form.inp_optkeynames.column))
+    for x in range(0, numb):
+        name = form.inp_optkeynames.column[x][0].value
+        data[name] = form.inp_optkeynames.column[x][1].value
+        if name == '':#'keyname here as _stub_stub2':
+            msg += 'Please fill in all keyname/keyvalue pairs or remove the empty row\n'
+            valid = False
+        if not valid:
+            raise ValidationError(msg)
+            
+        if form.inp_optkeynames.column[x][1].value == '':#'value here':
+            msg += 'Please fill in all keyname/keyvalue pairs or remove the empty row\n'
+            valid = False
+        if not valid:
+            raise ValidationError(msg)
+
+
+    
+    numb2 = len(list(form.inp_keynames.column))
+    for x in range(0, numb2):
+        name = form.inp_keynames.column[x][0].value
+        data[name] = form.inp_keynames.column[x][1].value
+        if name == '':#'keyname here as _stub_stub2':
+            msg += 'Please fill in all keyname/keyvalue pairs or remove the empty row\n'
+            valid = False
+        if not valid:
+            raise ValidationError(msg)
+            
+        if form.inp_keynames.column[x][1].value == '':#'value here':
+            msg += 'Please fill in all keyname/keyvalue pairs or remove the empty row\n'
+            valid = False
+        if not valid:
+            raise ValidationError(msg)
+    print(form.inp_loopnames.row)
+    #### Parse data loops here?
+    # numb3 = len(list(form.inp_loopnames.row))
+    # for x in range(0, numb3):
+    #     name = form.inp_loopnames.row[0][x].value
+    #     data[name] = parse_isotherm_data2(form.inp_isotherm_data.value)
+    
+     
     # Sanitize keys from optional menus
     for key in data:  # pylint: disable=consider-using-dict-items
         if data[key] == 'Select':
             data[key] = None
+            
+    # for key in data:
+    #     if data[key] == '':
+        
+        
 
     return data
+
+# def parse_isotherm_data2(measurements):
+#     """Parse text from isotherm data field.
+
+#     :param measurements: Data from text field
+#     :param adsorbates: Adsorbates dictionary
+#     :param form_type: 'single-component' or 'multi-component'
+#     :returns: python dictionary with isotherm data
+
+#     """
+#     for delimiter in ['\t', ';', '|', ',']:
+#         measurements = measurements.replace(delimiter, ' ')  # convert all delimiters to spaces
+#     measurements = re.sub(' +', ' ', measurements)  # collapse whitespace
+#     measurements = pd.read_table(
+#         StringIO(measurements),
+#         sep=',| ',
+#         #sep=' ',
+#         # for some reason, leaving only the space delimiter is causing a problem
+#         #  when lines have trailing whitespace. Need to check pandas documentation
+#         comment='#',
+#         header=None,
+#         engine='python')
+#     measurements = measurements.to_numpy(dtype=float)
+#     #return measurements
+#     return measurements
 
 
 def parse_isotherm_data(measurements, adorbates, form_type='single-component'):
@@ -107,6 +195,7 @@ def parse_isotherm_data(measurements, adorbates, form_type='single-component'):
         header=None,
         engine='python')
     measurements = measurements.to_numpy(dtype=float)
+    #return measurements
     return [parse_pressure_row(pressure, adorbates, form_type) for pressure in measurements]
 
 

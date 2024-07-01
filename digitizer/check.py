@@ -17,17 +17,24 @@ def get_bokeh_plot(isotherm_dict, pressure_scale='linear'):
 
     :returns: bokeh Figure instance
     """
-    title = f'{isotherm_dict["articleSource"]}, {isotherm_dict["adsorbent"]["name"]}, {isotherm_dict["temperature"]} K'
+
+    title = f'Placeholder Title'
+    #title = f'{isotherm_dict["temperature"]} K'
+    #title = f'{isotherm_dict["articleSource"]}, {isotherm_dict["adsorbent"]["name"]}, {isotherm_dict["temperature"]} K'
     p = figure(tools=TOOLS, x_axis_type=pressure_scale, title=title)  # pylint: disable=invalid-name
 
     pressures = [point['pressure'] for point in isotherm_dict['isotherm_data']]
-
-    for i in range(len(isotherm_dict['adsorbates'])):
+    
+    array = [x for x in range(len(isotherm_dict['adsorbates']))]
+    for i in array:
+   # for i in range(len(isotherm_dict['adsorbates'])):
+        
         adsorbate = isotherm_dict['adsorbates'][i]
         adsorption = [point['species_data'][i]['adsorption'] for point in isotherm_dict['isotherm_data']]
-
-        data = bmd.ColumnDataSource(data=dict(index=range(len(pressures)), pressure=pressures, adsorption=adsorption))
-
+        
+        #data = bmd.ColumnDataSource(data=dict(index=range(len(pressures)), pressure=pressures, adsorption=adsorption))
+        data = bmd.ColumnDataSource(data=dict(index=[x for x in range(len(pressures))], pressure=pressures, adsorption=adsorption))
+        
         p.line(  # pylint: disable=too-many-function-args
             'pressure',
             'adsorption',
@@ -38,18 +45,19 @@ def get_bokeh_plot(isotherm_dict, pressure_scale='linear'):
             'adsorption',
             source=data,
             legend_label=adsorbate['name'])
-
+    
     # update labels
-    p.xaxis.axis_label = 'Pressure [{}]'.format(isotherm_dict['pressureUnits'])
-    p.yaxis.axis_label = 'Adsorption [{}]'.format(isotherm_dict['adsorptionUnits'])
+    p.xaxis.axis_label = 'Pressure Units'
+    #p.xaxis.axis_label = 'Pressure [{}]'.format(isotherm_dict['pressureUnits'])
+    p.yaxis.axis_label = 'Adsorption Units'
+    #p.yaxis.axis_label = 'Adsorption Units[{}]'.format(isotherm_dict['adsorptionUnits'])
 
     tooltips = [(p.xaxis.axis_label, '@pressure'), (p.yaxis.axis_label, '@adsorption')]
     hover = bmd.HoverTool(tooltips=tooltips)
     p.tools.pop()
     p.tools.append(hover)
-
+    
     return p
-
 
 def _get_figure_pane(figure_image):
     """Get Figure pane for display."""
@@ -108,7 +116,12 @@ class IsothermCheckView(HasTraits):
     @observe('isotherm')
     def _observe_isotherm(self, change):
         isotherm = change['new']
-        self.row[0] = get_bokeh_plot(isotherm.json)
+        print('before get bokeh plot')
+        #self.row[0] = get_bokeh_plot(isotherm.json)
+        fig_obj = get_bokeh_plot(isotherm.json)
+        print('set fig obj')
+        self.row[0] = fig_obj
+        print('after get bokeh plot')
         self.row[1] = _get_figure_pane(isotherm.figure_image)
 
     def on_click_download(self):
@@ -128,3 +141,4 @@ class IsothermCheckView(HasTraits):
         """Return layout."""
         return pn.Column(self.row, self.inp_pressure_scale, pn.Row(self.btn_download, self.btn_add),
                          self.submissions.layout, footer)
+
