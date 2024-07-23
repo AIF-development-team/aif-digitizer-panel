@@ -4,94 +4,45 @@ Configuration, including options fetched from ISDB API.
 """
 import json
 import os
-import requests
-import requests_cache
 from . import MODULE_DIR
 
 AIF_REQUIRED = {} #loads AIF keynames with required tag from JSON file into dictionary
 AIF_OPTIONAL = {}
+LABEL_TO_NAME_REQ = {}
+LABEL_TO_NAME_OPT = {}
+AIF_VERSION = '9d1c623'
+
 AIF_LOOPS = []
+AIF_LOOP_NAMES = {}
 with open('aifdictionary.json', 'r', encoding='utf-8') as json_dict:
     json_dict = json.load(json_dict)
+
+
 for item in json_dict:
     if item['required'] == 'True':
-        AIF_REQUIRED[item['data name']] = item['description']
-        
+        if item['data name'] == '_audit_aif_version':
+            pass
+        else:
+            AIF_REQUIRED[item['label']] = item['description']
+            LABEL_TO_NAME_REQ[item['label']] =item['data name']
+
+#print(json_dict)
+
 substring1 = '_adsorp_'
 substring2 = '_desorp_'
 
 for item in json_dict:
     if substring1 in item['data name']:
-        AIF_LOOPS += [item['data name']] 
+        AIF_LOOPS += [item['label']]
+        AIF_LOOP_NAMES[item['label']] = item['data name']
         #print('success')
     elif substring2 in item['data name']:
-        AIF_LOOPS += [item['data name']]
+        AIF_LOOPS += [item['label']]
+        AIF_LOOP_NAMES[item['label']] = item['data name']
         #print('success2')
     elif item['required'] == 'False':
-        AIF_OPTIONAL[item['data name']] = item['description']
-# print(AIF_LOOPS)
-
-requests_cache.install_cache('matdb_cache')
-
-BASE_URL = 'https://adsorption.nist.gov/isodb/api'
-BIBLIO_API_URL = BASE_URL + '/biblio'
-
-QUANTITY_API_MAPPING = {
-    'adsorbents': '/materials.json',
-    'adsorbates': '/gases.json',
-    'isotherm_type': '/isotherm-type-lookup.json',
-    'pressure_units': '/pressure-unit-lookup.json',
-    'adsorption_units': '/adsorption-unit-lookup.json',
-    'measurement_type': '/category-type-lookup.json',
-    'concentration_units': '/concentration-unit-lookup.json',
-    'composition_type': '/composition-type-lookup.json',
-}
-QUANTITIES = {}
-for quantity, url in QUANTITY_API_MAPPING.items():
-    print(f'Fetching {url}...')
-    json_data = requests.get(BASE_URL + url).json()
-
-    names = []
-    for m in json_data:
-        names.append(m['name'])
-        try:
-            names += m['synonyms']
-        except KeyError:
-            pass
-    QUANTITIES[quantity] = {
-        'json': json_data,
-        'names': names,
-    }
-
-QUANTITIES['isotherm_type']['names'].append('Not specified')
-
-BIBLIOGRAPHY = requests.get(BASE_URL + '/biblios.json').json()
-DOIs = {entry['DOI'] for entry in BIBLIOGRAPHY}
-
-
-def find_by_name(name, json):
-    """Find JSON corresponding to quantity name."""
-    for q_json in json:
-        try:
-            candidates = [q_json['name']] + q_json['synonyms']
-        except AttributeError:
-            candidates = [q_json['name']]
-        if name in candidates:
-            return q_json
-
-    raise ValueError(f'JSON for {name} not found.')
-
-
-def find_by_key(value, key, json):
-    """Find JSON corresponding to quantity key."""
-    for q_json in json:
-        try:
-            if value == q_json[key]:
-                return q_json
-        except AttributeError:
-            continue
-
-    raise ValueError(f'JSON for {value} not found.')
+        AIF_OPTIONAL[item['label']] = item['description']
+        LABEL_TO_NAME_OPT[item['label']] = item['data name']
 
 SINGLE_COMPONENT_EXAMPLE = \
 """#pressure,adsorption
@@ -104,22 +55,6 @@ SINGLE_COMPONENT_EXAMPLE = \
 58.3573,0.270268
 66.2941,0.300474
 72.9855,0.340276"""
-
-MULTI_COMPONENT_EXAMPLE = \
-"""#pressure,composition1,adsorption1,...,total_adsorption(opt)
-0.310676,1,0.019531,0.019531
-5.13617,1,0.000625751,0.000625751
-7.93711,1,0.0204602,0.0204602
-12.4495,1,0.06066,0.06066
-30.0339,1,0.159605,0.159605
-44.8187,1,0.200392,0.200392
-58.3573,1,0.270268,0.270268
-66.2941,1,0.300474,0.300474
-72.9855,1,0.340276,0.340276"""
-
-FIGURE_FILENAME_EXAMPLE = 'Figure_S5a.png'
-with open(os.path.join(MODULE_DIR, 'static', FIGURE_FILENAME_EXAMPLE), 'rb') as handle:
-    FIGURE_EXAMPLE = handle.read()
 
 SUBMISSION_FOLDER = os.getenv('DIGITIZER_SUBMISSION_FOLDER', os.path.join(MODULE_DIR, os.pardir, 'submissions'))
 STATIC_DIR = os.path.join(MODULE_DIR, 'static')

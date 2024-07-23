@@ -6,7 +6,8 @@ import bokeh.models as bmd
 from bokeh.plotting import figure
 import panel as pn
 
-from .submission import Submissions, Isotherm
+#from .submission import Submissions,
+from .submission import Isotherm
 from .footer import footer
 
 TOOLS = ['pan', 'wheel_zoom', 'box_zoom', 'reset', 'save']
@@ -23,28 +24,24 @@ def get_bokeh_plot(isotherm_dict, pressure_scale='linear'):
     #title = f'{isotherm_dict["articleSource"]}, {isotherm_dict["adsorbent"]["name"]}, {isotherm_dict["temperature"]} K'
     p = figure(tools=TOOLS, x_axis_type=pressure_scale, title=title)  # pylint: disable=invalid-name
 
-    pressures = [point['pressure'] for point in isotherm_dict['isotherm_data']]
-    
-    array = [x for x in range(len(isotherm_dict['adsorbates']))]
-    for i in array:
-   # for i in range(len(isotherm_dict['adsorbates'])):
-        
-        adsorbate = isotherm_dict['adsorbates'][i]
-        adsorption = [point['species_data'][i]['adsorption'] for point in isotherm_dict['isotherm_data']]
-        
-        #data = bmd.ColumnDataSource(data=dict(index=range(len(pressures)), pressure=pressures, adsorption=adsorption))
-        data = bmd.ColumnDataSource(data=dict(index=[x for x in range(len(pressures))], pressure=pressures, adsorption=adsorption))
-        
-        p.line(  # pylint: disable=too-many-function-args
+    #pressures = [point['pressure'] for point in isotherm_dict['isotherm_data']]
+    pressures = [float(x) for x in isotherm_dict['_adsorp_pressure'] if x != '#pressure']
+    #print(pressures)
+    adsorption = [float(x) for x in isotherm_dict['_adsorp_amount'] if x != 'adsorption']
+    #print(adsorption)
+    data = bmd.ColumnDataSource(data=dict(index=[x for x in range(len(pressures))], pressure=pressures, adsorption=adsorption))
+    p.line(  # pylint: disable=too-many-function-args
             'pressure',
             'adsorption',
             source=data,
-            legend_label=adsorbate['name'])
-        p.circle(  # pylint: disable=too-many-function-args
+            legend_label='adsorbate'
+    )
+    p.circle(  # pylint: disable=too-many-function-args
             'pressure',
             'adsorption',
             source=data,
-            legend_label=adsorbate['name'])
+            legend_label='adsorbate'
+    )
     
     # update labels
     p.xaxis.axis_label = 'Pressure Units'
@@ -87,8 +84,8 @@ class IsothermCheckView(HasTraits):
         self.btn_download = pn.widgets.FileDownload(filename='data.json',
                                                     button_type='primary',
                                                     callback=self.on_click_download)
-        self.btn_add = pn.widgets.Button(name='Add to submission', button_type='primary')
-        self.btn_add.on_click(self.on_click_add)
+        # self.btn_add = pn.widgets.Button(name='Add to submission', button_type='primary')
+        # self.btn_add.on_click(self.on_click_add)
 
         self.inp_pressure_scale = pn.widgets.RadioButtonGroup(name='Pressure scale', options=['linear', 'log'])
         self.inp_pressure_scale.param.watch(self.on_click_set_scale, 'value')
@@ -104,33 +101,30 @@ class IsothermCheckView(HasTraits):
         # observe submission form and propagate changes to input forms
         self.observed_forms = observed_forms
 
-        def on_load_update(change):
-            self.isotherm = change['new']
-            # todo: reload multi-component form depending on isotherm data  # pylint: disable=fixme
-            for form in self.observed_forms[0:1]:
-                form.populate_from_isotherm(isotherm=change['new'])
+        # def on_load_update(change):
+        #     self.isotherm = change['new']
+        #     # todo: reload multi-component form depending on isotherm data  # pylint: disable=fixme
+        #     for form in self.observed_forms[0:1]:
+        #         form.populate_from_isotherm(isotherm=change['new'])
 
-        self.submissions = Submissions()
-        self.submissions.observe(on_load_update, names=['loaded_isotherm'])
+        # self.submissions = Submissions()
+        # self.submissions.observe(on_load_update, names=['loaded_isotherm'])
 
     @observe('isotherm')
     def _observe_isotherm(self, change):
         isotherm = change['new']
-        print('before get bokeh plot')
         #self.row[0] = get_bokeh_plot(isotherm.json)
         fig_obj = get_bokeh_plot(isotherm.json)
-        print('set fig obj')
         self.row[0] = fig_obj
-        print('after get bokeh plot')
         self.row[1] = _get_figure_pane(isotherm.figure_image)
 
     def on_click_download(self):
         """Download JSON file."""
         return StringIO(self.isotherm.json_str)
 
-    def on_click_add(self, event):  # pylint: disable=unused-argument
-        """Add isotherm to submission."""
-        self.submissions.append(self.isotherm)
+    # def on_click_add(self, event):  # pylint: disable=unused-argument
+    #     """Add isotherm to submission."""
+    #     self.submissions.append(self.isotherm)
 
     def on_click_set_scale(self, event):  # pylint: disable=unused-argument
         """Set pressure scale."""
@@ -139,6 +133,8 @@ class IsothermCheckView(HasTraits):
     @property
     def layout(self):
         """Return layout."""
-        return pn.Column(self.row, self.inp_pressure_scale, pn.Row(self.btn_download, self.btn_add),
-                         self.submissions.layout, footer)
+        return pn.Column(self.row, self.inp_pressure_scale, pn.Row(self.btn_download),
+                         #self.submissions.layout,
+                         footer
+                         )
 

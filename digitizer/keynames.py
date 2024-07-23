@@ -3,7 +3,6 @@
 import collections
 import panel as pn
 import panel.widgets as pw
-from .config import QUANTITIES
 from . import restrict_kwargs
 
 
@@ -19,7 +18,8 @@ class Keyname():  # pylint: disable=too-few-public-methods
                                      placeholder='value here')
         
         self.row = pn.Row(self.inp_name, self.inp_value)
-
+        # self.row = pn.Row(self.btn_add, self.btn_remove)
+        
     @property
     def dict(self):
         """Dictionary with keyname info"""
@@ -41,6 +41,7 @@ class KeynameWithControls(Keyname):
         self.btn_remove.on_click(self.on_click_remove)
         #self.inp_refcode = pw.TextInput(name='Refcode')
         self.row = pn.Row(self.inp_name, self.inp_value, self.btn_add, self.btn_remove)
+        #self.row = pn.Row(self.btn_add, self.btn_remove)
         # self.row = pn.GridSpec(height=50)
         # self.row[0, 0:8] = self.inp_name
         # self.row[0, 9] = self.btn_add

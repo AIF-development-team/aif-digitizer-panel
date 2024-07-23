@@ -3,7 +3,7 @@
 import collections
 import panel as pn
 import panel.widgets as pw
-from .config import QUANTITIES, AIF_LOOPS
+from .config import AIF_LOOPS
 from . import restrict_kwargs
 
 
