@@ -11,15 +11,15 @@ class Keyname():  # pylint: disable=too-few-public-methods
     def __init__(self):
         """Initialize single keyname row.
         """
-        self.inp_name = pw.TextInput(name='Keyname',
-                                    placeholder='keyname here as _stub_stub2',
-                                             )
-        self.inp_value = pw.TextInput(name='Value',
-                                     placeholder='value here')
-        
+        self.inp_name = pw.TextInput(
+            name='Keyname',
+            placeholder='keyname here as _stub_stub2',
+        )
+        self.inp_value = pw.TextInput(name='Value')
+
         self.row = pn.Row(self.inp_name, self.inp_value)
         # self.row = pn.Row(self.btn_add, self.btn_remove)
-        
+
     @property
     def dict(self):
         """Dictionary with keyname info"""

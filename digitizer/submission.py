@@ -65,7 +65,6 @@ class Isotherm(HasTraits):
 #         s = Submissions()
 #         s.observed_forms(on_change, names=['loaded_isotherm'])
 
-
 #     """
 
 #     loaded_isotherm = Instance(Isotherm)

@@ -9,6 +9,8 @@ import panel as pn
 #from .submission import Submissions,
 from .submission import Isotherm
 from .footer import footer
+from .parse import prepare_isotherm_dict
+from .makeAIF import makeAIF
 
 TOOLS = ['pan', 'wheel_zoom', 'box_zoom', 'reset', 'save']
 
@@ -23,26 +25,23 @@ def get_bokeh_plot(isotherm_dict, pressure_scale='linear'):
     #title = f'{isotherm_dict["temperature"]} K'
     #title = f'{isotherm_dict["articleSource"]}, {isotherm_dict["adsorbent"]["name"]}, {isotherm_dict["temperature"]} K'
     p = figure(tools=TOOLS, x_axis_type=pressure_scale, title=title)  # pylint: disable=invalid-name
-
+    p_vals = list(isotherm_dict['loops'][0].values())[0]
+    #print(p_vals)
+    a_vals = list(isotherm_dict['loops'][1].values())[0]
+    #print(a_vals)
     #pressures = [point['pressure'] for point in isotherm_dict['isotherm_data']]
-    pressures = [float(x) for x in isotherm_dict['_adsorp_pressure'] if x != '#pressure']
+    pressures = [float(x) for x in p_vals]
     #print(pressures)
-    adsorption = [float(x) for x in isotherm_dict['_adsorp_amount'] if x != 'adsorption']
+    adsorption = [float(x) for x in a_vals]
+    #adsorption = [float(x) for x in isotherm_dict['loops']['_adsorp_amount'] if x != 'adsorption']
     #print(adsorption)
-    data = bmd.ColumnDataSource(data=dict(index=[x for x in range(len(pressures))], pressure=pressures, adsorption=adsorption))
+    data = bmd.ColumnDataSource(
+        data=dict(index=[x for x in range(len(pressures))], pressure=pressures, adsorption=adsorption))
     p.line(  # pylint: disable=too-many-function-args
-            'pressure',
-            'adsorption',
-            source=data,
-            legend_label='adsorbate'
-    )
+        'pressure', 'adsorption', source=data, legend_label='adsorbate')
     p.circle(  # pylint: disable=too-many-function-args
-            'pressure',
-            'adsorption',
-            source=data,
-            legend_label='adsorbate'
-    )
-    
+        'pressure', 'adsorption', source=data, legend_label='adsorbate')
+
     # update labels
     p.xaxis.axis_label = 'Pressure Units'
     #p.xaxis.axis_label = 'Pressure [{}]'.format(isotherm_dict['pressureUnits'])
@@ -53,8 +52,9 @@ def get_bokeh_plot(isotherm_dict, pressure_scale='linear'):
     hover = bmd.HoverTool(tooltips=tooltips)
     p.tools.pop()
     p.tools.append(hover)
-    
+
     return p
+
 
 def _get_figure_pane(figure_image):
     """Get Figure pane for display."""
@@ -80,10 +80,12 @@ class IsothermCheckView(HasTraits):
             self.isotherm = isotherm
         else:
             self.row = pn.Row(figure(tools=TOOLS), _get_figure_pane(None))
-
-        self.btn_download = pn.widgets.FileDownload(filename='data.json',
+        # self.btn_download = pn.widgets.FileDownload(filename='data.json',
+        #                                             button_type='primary',
+        #                                             callback=self.on_click_download)
+        self.btn_download = pn.widgets.FileDownload(filename='data.txt',
                                                     button_type='primary',
-                                                    callback=self.on_click_download)
+                                                    callback=self.on_click_check)
         # self.btn_add = pn.widgets.Button(name='Add to submission', button_type='primary')
         # self.btn_add.on_click(self.on_click_add)
 
@@ -118,9 +120,20 @@ class IsothermCheckView(HasTraits):
         self.row[0] = fig_obj
         self.row[1] = _get_figure_pane(isotherm.figure_image)
 
-    def on_click_download(self):
-        """Download JSON file."""
-        return StringIO(self.isotherm.json_str)
+    # def on_click_download(self):
+    #     """Download JSON file."""
+    #     return StringIO(self.isotherm.json_str)
+
+    # def on_click_download(self):
+    #     """Download JSON file."""
+    #     return StringIO(self.prepare_isotherm_dict.AIF)
+
+    def on_click_check(self):  # pylint: disable=unused-argument
+        """Check isotherm."""
+        data, msg = prepare_isotherm_dict(self.observed_forms[0])
+        #print(makeAIF(data))
+        return StringIO(makeAIF(data))
+        #return StringIO('aaaa')
 
     # def on_click_add(self, event):  # pylint: disable=unused-argument
     #     """Add isotherm to submission."""
@@ -133,8 +146,9 @@ class IsothermCheckView(HasTraits):
     @property
     def layout(self):
         """Return layout."""
-        return pn.Column(self.row, self.inp_pressure_scale, pn.Row(self.btn_download),
-                         #self.submissions.layout,
-                         footer
-                         )
-
+        return pn.Column(
+            self.row,
+            self.inp_pressure_scale,
+            pn.Row(self.btn_download),
+            #self.submissions.layout,
+            footer)

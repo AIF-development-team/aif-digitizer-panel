@@ -12,9 +12,11 @@ class LoopName():  # pylint: disable=too-few-public-methods
     def __init__(self):
         """Initialize single keyname row.
         """
-        self.inp_name = pw.Select(name='Loop Name',
-                                    options = AIF_LOOPS,)
-        
+        self.inp_name = pw.Select(
+            name='Loop Name',
+            options=AIF_LOOPS,
+        )
+
         self.row = pn.Row(self.inp_name)
 
     @property
@@ -66,19 +68,21 @@ class LoopNames(collections.UserList):  # pylint: disable=R0901
         """
         super().__init__()
         self.data = loopnames or []
-        self._row = pn.Row(objects=[a.row for a in self]) #column
+        self._row = pn.Row(objects=[a.row for a in self])  #column
 
-        # Add one adsorbate
+        # Add one column
         if not self.data:
             if show_controls:
                 self.append(LoopNameWithControls(parent=self))
+                self.append(LoopNameWithControls(parent=self))
             else:
+                self.append(LoopName())
                 self.append(LoopName())
 
     @property
-    def row(self): #column
+    def row(self):  #column
         """Panel column for visualization"""
-        return self._row #column
+        return self._row  #column
 
     @property
     def inputs(self):
@@ -88,9 +92,9 @@ class LoopNames(collections.UserList):  # pylint: disable=R0901
     def append(self, item):  # pylint: disable=W0221
         """Add new keyname."""
         self.data.append(item)
-        self._row.append(item.row) #column
+        self._row.append(item.row)  #column
 
     def remove(self, item):  # pylint: disable=W0221
         """Remove keyname from list."""
         self.data.remove(item)
-        self._row.remove(item.row) #column
+        self._row.remove(item.row)  #column

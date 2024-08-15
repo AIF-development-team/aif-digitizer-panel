@@ -12,12 +12,10 @@ class OptKeyname():  # pylint: disable=too-few-public-methods
     def __init__(self):
         """Initialize single keyname row.
         """
-        self.inp_name = pw.Select(name='Keyname', 
-                                     options = [item for item in AIF_OPTIONAL.keys()]) 
-        
-        self.inp_value = pw.TextInput(name='Value',
-                                     placeholder = 'value here')
-        
+        self.inp_name = pw.Select(name='Keyname', options=[item for item in AIF_OPTIONAL.keys()])
+
+        self.inp_value = pw.TextInput(name='Value')
+
         self.row = pn.Row(self.inp_name, self.inp_value)
 
     @property
